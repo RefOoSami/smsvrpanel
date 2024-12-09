@@ -230,6 +230,8 @@ def verification_code_finder():
                     code = get_panel_code_api9(number)
                 elif selected_api == '10':
                     code = get_panel_code_api10(number)
+                elif selected_api == '11':
+                    code = get_panel_code_api11(number)
                 else:
                     flash('Please select an API.', 'danger')
                     return render_template('verification.html')
@@ -808,7 +810,17 @@ def get_panel_code_api10(number):
         return code
 
     return code  
-    
+def get_panel_code_api11(number):
+    code = get_verification_code4(number, 'Abdo17461746', 'Abdo17461746')
+    if code:
+        return code
+
+    code = get_verification_code4(number, 'mohhhamd01', 'mohhhamd0')
+    if code:
+        return code
+
+    return code  
+
 def get_verification_code3(number, user, password):
 
     headers = {
@@ -881,6 +893,41 @@ def get_verification_code3(number, user, password):
             return None
     except:
         return None
+
+def get_verification_code4(number,user,password):
+
+    api_url = 'http://zivastats.com/rest/sms'
+
+    auth_hash = base64.b64encode(f"{user}:{password}".encode("utf-8")).decode("utf-8")
+
+    # Set the headers including the Authorization header
+    headers = {
+        "Authorization": f"Basic {auth_hash}"
+    }
+    # Define parameters for pagination and filtering by most recent ID
+    params = {
+        'page': 1,        # Start at page 1
+        'per-page': 1000,  # Set to maximum per page (1000)
+    }
+    
+    # Make the request
+    response = requests.get(api_url, headers=headers, params=params)
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Parse the JSON response
+        data = response.json()
+        
+        # Search for the destination_addr and get its short_message
+        for record in data:
+            if record.get('destination_addr') == number:
+                short_message = record.get('short_message')
+                # Use regex to extract the code (first sequence of 6 digits)
+                code = re.search(r'\d+', short_message)
+                if code:
+                    return code.group()  # Return the extracted code
+    
+    # If the destination_addr wasn't found or there was an error
+    return None
 
 if __name__ == '__main__':
     init_db()
